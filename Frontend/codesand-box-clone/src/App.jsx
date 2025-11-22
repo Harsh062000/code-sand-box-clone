@@ -1,14 +1,26 @@
-import { useState } from 'react'
 import './App.css'
+import usePing from './hooks/apis/queries/usePing'
 
 function App() {
-  const [count, setCount] = useState(0)
+
+  const {
+        isLoading,
+        isError,
+        data,
+        error
+      } = usePing();
+
+  if(isLoading){
+    return (
+      <h1>Loading...</h1>
+    )
+  }
 
   return (
     <>
-    <h2>
-      this is conel project
-    </h2>
+      <h2>
+        this is conel project {data.message}
+      </h2>
     </>
   )
 }
