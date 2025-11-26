@@ -1,26 +1,13 @@
 import './App.css'
-import usePing from './hooks/apis/queries/usePing'
-
+import {Route, Routes} from 'react-router-dom';
+import CreateProject from './Pages/CreateProject';
 function App() {
-
-  const {
-        isLoading,
-        isError,
-        data,
-        error
-      } = usePing();
-
-  if(isLoading){
-    return (
-      <h1>Loading...</h1>
-    )
-  }
 
   return (
     <>
-      <h2>
-        this is conel project {data.message}
-      </h2>
+      <Routes>
+        <Route path='/' element={<CreateProject />}/>
+      </Routes>
     </>
   )
 }
