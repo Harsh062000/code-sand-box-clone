@@ -1,6 +1,7 @@
 import { Button, Layout } from 'antd';
 
 import { useCreateProject } from '../hooks/apis/mutations/useCreateProject'
+import { useNavigate } from 'react-router-dom';
 
 const layoutStyle = {
     borderRadius: 8,
@@ -36,15 +37,18 @@ function CreateProject() {
 
     const {Header, Footer, Content} = Layout;
 
-    const {createProjectMutation, isPending } = useCreateProject();
+    const {createProjectMutation } = useCreateProject();
+
+    const navigate = useNavigate();
 
     async function handleCreateProject() {
         console.log("going to trigger the create API");
 
         try {
-            await createProjectMutation();
+            const response = await createProjectMutation();
 
              console.log("now we should redirect to the project editor page");
+             navigate(`/project/${response.data}`);
         } catch (error) {
             console.log("error creating project:", error);
         }
