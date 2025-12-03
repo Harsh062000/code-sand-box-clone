@@ -1,9 +1,12 @@
 import { useParams } from "react-router-dom";
+import { useEffect } from "react";
+import { io } from "socket.io-client";
+
 import EditorComponent from "../Components/molecules/EditorComponent/EditorComponent";
 import EditorButton from "../Components/atoms/EditorButton/EditorButton";
 import TreeStructure from "../Components/organisms/TreeStructure/TreeStructure";
-import { useEffect } from "react";
 import { useTreeStructureStore } from "../store/treeStructureStore";
+import { useEditorSocketStore } from "../store/editorSocketStore";
 
 function ProjectPlayground() {
 
@@ -11,15 +14,33 @@ function ProjectPlayground() {
 
   const {setProjectId, projectId} = useTreeStructureStore();
 
+  const { setEditorSocket,  } = useEditorSocketStore();
+
   useEffect(() => {
 
-    setProjectId(projectIdFromUrl);
+    if(projectIdFromUrl){
+      setProjectId(projectIdFromUrl);
 
-  }, [projectIdFromUrl, setProjectId]);
+      const editorSocketConnection = io(`${import.meta.env.VITE_BACKEND_URL}/editor`, {
+        query:{
+          projectId: projectIdFromUrl
+        }
+      });
+
+      setEditorSocket(editorSocketConnection);
+
+    }
+
+  }, [projectIdFromUrl, setProjectId, setEditorSocket]);
 
   return (
     <>
-      Project Id is {projectIdFromUrl}
+    <div
+      style={{
+        display: "flex",
+      }}
+    >
+
       { projectId && (
         <div
           style={{
@@ -36,7 +57,12 @@ function ProjectPlayground() {
           <TreeStructure />
         </div>
       )}
+
       <EditorComponent />
+    
+    </div>
+      
+      
       <EditorButton isActive={false}/>
       <EditorButton isActive={true}/>
     </>
