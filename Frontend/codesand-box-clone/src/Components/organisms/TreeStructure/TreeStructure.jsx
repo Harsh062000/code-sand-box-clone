@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react'
-import { useTreeStructureStore } from '../../../store/treeStructureStore'
+import { useTreeStructureStore } from '../../../store/treeStructureStore';
+import { useFileContextMenuStore } from '../../../store/fileContextMenuStore'; 
 import TreeNode from '../../molecules/TreeNode/TreeNode';
+import { FileContextMenu } from '../../molecules/ContextMenu/FileContextMenu';
 // import { useParams } from 'react-router-dom';
 
 function TreeStructure() {
@@ -8,6 +10,13 @@ function TreeStructure() {
     // const { projectId } = useParams();
 
     const { treeStructure, setTreeStructure } = useTreeStructureStore();
+
+    const { 
+            file,
+            isOpen: isFileContextOpen,
+            x: fileContextX,
+            y: fileContextY
+        } = useFileContextMenuStore();
 
     useEffect(() => {
 
@@ -20,8 +29,14 @@ function TreeStructure() {
     }, [setTreeStructure, treeStructure])
 
   return (
-    <>
-        <div>TreeStructure</div>
+    <>  
+        {isFileContextOpen && fileContextX && fileContextY && (
+            <FileContextMenu 
+                x={fileContextX}
+                y={fileContextY}
+                path={file}
+            />
+        )}
         <TreeNode fileFolderData={treeStructure} />
     </>
   )

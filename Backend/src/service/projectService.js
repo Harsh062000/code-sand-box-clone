@@ -11,7 +11,7 @@ export const createProjectService = async () => {
     //create a unique id and then inside the project folder create a new folder with that id
         const projectId = uuid4();
     
-        console.log('new project Id:', projectId);
+        // console.log('new project Id:', projectId);
     
         await fs.mkdir(`./projects/${projectId}`);
     
