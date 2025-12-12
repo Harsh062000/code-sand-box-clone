@@ -80,10 +80,10 @@ terminalNameSpace.on("connection", (socket) => {
 
     let projectId = socket.handshake.query['projectId'];
 
-    socket.on("shell-input", (data) => {
-        console.log("input recevied", data);
-        terminalNameSpace.emit("shell-output", data);
-    });
+    // socket.on("shell-input", (data) => {
+    //     console.log("input recevied", data);
+    //     terminalNameSpace.emit("shell-output", data);
+    // });
 
     socket.on("disconnect", () => {
         console.log("termiinal disconnected");
