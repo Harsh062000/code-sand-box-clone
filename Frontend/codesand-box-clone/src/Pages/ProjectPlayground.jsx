@@ -7,6 +7,7 @@ import EditorButton from "../Components/atoms/EditorButton/EditorButton";
 import TreeStructure from "../Components/organisms/TreeStructure/TreeStructure";
 import { useTreeStructureStore } from "../store/treeStructureStore";
 import { useEditorSocketStore } from "../store/editorSocketStore";
+import BrowserTerminal from "../Components/molecules/BrowserTerminal/BrowserTerminal.jsx";
 
 function ProjectPlayground() {
 
@@ -65,6 +66,10 @@ function ProjectPlayground() {
       
       <EditorButton isActive={false}/>
       <EditorButton isActive={true}/>
+
+      <div>
+        <BrowserTerminal />
+      </div>
     </>
   )
 }

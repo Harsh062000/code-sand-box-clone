@@ -8,6 +8,7 @@ import path from 'path';
 import apiRouter from './routes/index.js';
 import {PORT} from './config/serverConfig.js';
 import { handlEditorSocketEvents } from './socketHandlers/editorHandler.js';
+import { handleContainercreate } from './containers/handleContainerCreate.js';
 
 const app = express();
 const server = createServer(app);
@@ -71,6 +72,24 @@ editorNameSpace.on("connection", (socket) => {
         await watcher.close();
         console.log("editor disconnected");
     });
+});
+
+const terminalNameSpace = io.of('/terminal');
+terminalNameSpace.on("connection", (socket) => {
+    console.log("terminal connected");
+
+    let projectId = socket.handshake.query['projectId'];
+
+    socket.on("shell-input", (data) => {
+        console.log("input recevied", data);
+        terminalNameSpace.emit("shell-output", data);
+    });
+
+    socket.on("disconnect", () => {
+        console.log("termiinal disconnected");
+    });
+
+    handleContainercreate(projectId, socket);
 })
 
 server.listen(PORT, () => {
