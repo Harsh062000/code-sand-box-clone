@@ -4,11 +4,14 @@ import {createServer} from 'node:http';
 import {Server} from 'socket.io';
 import chokidar from 'chokidar';
 import path from 'path';
+import { WebSocketServer } from 'ws';
 
 import apiRouter from './routes/index.js';
 import {PORT} from './config/serverConfig.js';
 import { handlEditorSocketEvents } from './socketHandlers/editorHandler.js';
-import { handleContainercreate } from './containers/handleContainerCreate.js';
+import { handleContainercreate, listContainer } from './containers/handleContainerCreate.js';
+import { handleTerminalCreation } from './containers/handleTerminalCreation.js';
+
 
 const app = express();
 const server = createServer(app);
@@ -66,6 +69,12 @@ editorNameSpace.on("connection", (socket) => {
         });
     }
 
+    socket.on("getPort", () => {
+        console.log("get port even received");
+        listContainer();
+    })
+    
+
     handlEditorSocketEvents(socket, editorNameSpace);
 
     socket.on("disconnect", async () => {
@@ -74,25 +83,65 @@ editorNameSpace.on("connection", (socket) => {
     });
 });
 
-const terminalNameSpace = io.of('/terminal');
-terminalNameSpace.on("connection", (socket) => {
-    console.log("terminal connected");
+// const terminalNameSpace = io.of('/terminal');
+// terminalNameSpace.on("connection", (socket) => {
+//     console.log("terminal connected");
 
-    let projectId = socket.handshake.query['projectId'];
+//     let projectId = socket.handshake.query['projectId'];
 
-    // socket.on("shell-input", (data) => {
-    //     console.log("input recevied", data);
-    //     terminalNameSpace.emit("shell-output", data);
-    // });
+//     // socket.on("shell-input", (data) => {
+//     //     console.log("input recevied", data);
+//     //     terminalNameSpace.emit("shell-output", data);
+//     // });
 
-    socket.on("disconnect", () => {
-        console.log("termiinal disconnected");
-    });
+//     socket.on("disconnect", () => {
+//         console.log("termiinal disconnected");
+//     });
 
-    handleContainercreate(projectId, socket);
-})
+//     handleContainercreate(projectId, socket);
+// })
 
 server.listen(PORT, () => {
-console.log(`server is running on port ${PORT}`);
-
+    console.log(`server is running on port ${PORT}`);
 });
+
+const webSocketForTerminal = new WebSocketServer({
+    noServer: true, //we will handle the upgrade event from http to tcp for socket manually
+});
+
+server.on("upgrade", (req, tcpSocket, head) => {
+    /*
+    req: incoming http request
+    socket: TCP socket 
+    head: buffer containing the first packet of the upgraded stream
+    */
+    //this callback will be called when a client tries to connect to the server through websocket
+    const isTermianl = req.url.includes("/terminal");
+
+    if(isTermianl){
+        console.log(req.url);
+        const projectId = req.url.split("=")[1];
+        console.log(projectId);
+
+        handleContainercreate(projectId, webSocketForTerminal, req, tcpSocket, head);
+    }
+});
+
+webSocketForTerminal.on("connection", (ws, req, container) => {
+    console.log("terminal connected", ws, req, container);
+    handleTerminalCreation(container, ws);
+
+    
+
+    ws.on("close", () => {
+        container.remove({
+            force: true
+        }, (err, data) => {
+            if(err){
+                console.log("Error while removing container", err);
+            }
+
+            console.log("container removed", data)
+        })
+    })
+})

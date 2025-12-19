@@ -14,7 +14,7 @@ export const handlEditorSocketEvents = (socket, editorNameSpace) => {
                 data: "Error writting the file",
             });
         }
-    });
+    }); 
 
     socket.on("createFile", async ({ pathToFileOrFolder }) => {
         const isFileAlreadyPresent = await fs.stat(pathToFileOrFolder);

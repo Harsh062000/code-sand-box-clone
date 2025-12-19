@@ -3,7 +3,18 @@ import Docker from 'dockerode';
 
 const docker = new Docker();
 
-export const handleContainercreate = async (projectId, socket) => {
+export const listContainer = async () => {
+    
+    const container = await docker.listContainers();
+    // console.log("containers List", container);
+
+    // ports array from all containers
+    container.forEach((conatainerInfo) => {
+        console.log("conatainer Info", conatainerInfo.Ports);
+    })
+}
+
+export const handleContainercreate = async (projectId, terimnalSocket, req, tcpSocket, head) => {
     console.log("project id received for container create ", projectId);
 
     try {
@@ -12,9 +23,13 @@ export const handleContainercreate = async (projectId, socket) => {
             AttachStdin: true,
             AttachStdout: true,
             AttachStderr: true,
-            CMD: ['/bin/bash'],
+            Cmd: ['/bin/bash'],
             Tty: true,
             User: 'sandbox',
+            ExposedPorts: {
+                "5173/tcp": {}
+            },
+            Env: ["HOST=0.0.0.0"],
             HostConfig: {
                 Binds: [
                     // mounting the project directory to the constainer
@@ -27,10 +42,6 @@ export const handleContainercreate = async (projectId, socket) => {
                         }
                     ] 
                 },
-                ExposedPorts: {
-                    "5173/tcp": {}
-                },
-                Env: ["HOST=0.0.0.0"]
             }
         });
 
@@ -40,53 +51,33 @@ export const handleContainercreate = async (projectId, socket) => {
 
         console.log("container started successfully");
 
-        container.exec({
-            Cmd: [  "/bin/bash"],
-            User: "sandbox",
-            AttachStdin: true,
-            AttachStdout: true,
-            AttachStderr: true,
-        }, (err, exec) => {
-            if(err){
-                console.log("Error while creating exec", err);
-                return;
-            }
-
-            exec.start({ hijack: true }, (err, stream) => {
-                if(err){
-                    console.log("Error while starting exec", err);
-                    return;
-                }
-
-                processStream(stream, socket);
-                socket.on("shell-input", (data) => {
-                    stream.write(data);
-                })
-
-            });
+        //place where we upgrade the connection to websocket
+        terimnalSocket.handleUpgrade(req, tcpSocket, head, (establishedWSconnection) => {
+            terimnalSocket.emit("connection", establishedWSconnection, req, container);
         });
+
+        // container.exec({
+        //     Cmd: [  "/bin/bash"],
+        //     User: "sandbox",
+        //     AttachStdin: true,
+        //     AttachStdout: true,
+        //     AttachStderr: true,
+        // }, (err, exec) => {
+        //     if(err){
+        //         console.log("Error while creating exec", err);
+        //         return;
+        //     }
+
+        //     exec.start({ hijack: true }, (err, stream) => {
+        //         if(err){
+        //             console.log("Error while starting exec", err);
+        //             return;
+        //         }
+        //     });
+        // });
+    
     } catch (error) {
         console.error("Error creating container:", error);
     }
 }
 
-function processStream(stream, socket){
-    let buffer = Buffer.from("");
-
-    stream.on("data", (data) => {
-        buffer = Buffer.concat([buffer, data]);
-        console.log(buffer.toString());
-        socket.emit("shell-output", buffer.toString());
-        buffer = Buffer.from("");
-    });
-
-    stream.on("end", () => {
-        console.log("Stream ended");
-        socket.emit("shell-output", "Stream ended");
-    });
-
-    stream.on("error", (err) => {
-        console.log("Stream error", err);
-        socket.emit("shell-output", "Stream err");
-    })
-}
